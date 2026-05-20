@@ -30,6 +30,6 @@
     "typescript": "5.3.2"
   },
   "dependencies": {
-    "mqtt": "^5.14.1"
+    "mqtt": "5.14.1"
   }
 }
