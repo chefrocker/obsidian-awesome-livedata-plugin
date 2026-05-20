@@ -75,7 +75,7 @@ Search for "Live Data Hub" in **Settings → Community plugins → Browse**.
 ### Beta via BRAT
 
 1. Install [BRAT](https://github.com/TfTHacker/obsidian42-brat).
-2. Add the repo URL `https://github.com/cHefroCker/obsidian-live-data-hub`.
+2. Add the repo URL `https://github.com/chefrocker/obsidian-awesome-livedata-plugin`.
 3. BRAT will install the latest release and keep it up to date.
 
 ## License
