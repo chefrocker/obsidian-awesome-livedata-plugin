@@ -1,0 +1,83 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+.pnpm-lock.yaml
+
+# Build artifacts
+main.js
+main.js.map
+*.js.map
+
+# IDEs & Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+.classpath
+.c9/
+*.launch
+.settings/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Testing & Coverage
+coverage/
+.nyc_output/
+.jest-cache/
+dist/test/
+
+# OS files
+Thumbs.db
+.AppleDouble
+.LSOverride
+._*
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+.~*
+.*.swp
+
+# Obsidian plugin development
+.obsidian/
+.obsidian.json
+data.json
+plugin-data/
+
+# IDE settings
+.vscode/settings.json
+.idea/
+
+# Local development
+.claude/
+
+# Distribution
+dist/
+build/
+*.tgz
+*.tar.gz
+
+# Logs
+logs/
+*.log
+lerna-debug.log*
+
+# Misc
+.cache/
+*.pid
+*.seed
+*.pid.lock
+.turbo/
