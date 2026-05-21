@@ -1,7 +1,7 @@
 {
   "id": "live-data-hub",
   "name": "Live Data Hub",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "minAppVersion": "1.4.0",
   "description": "Display live MQTT and REST API data directly in your notes.",
   "author": "Sandro Ballarini",
