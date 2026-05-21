@@ -2,6 +2,9 @@ export interface LiveDataSettings {
     brokerHost: string;
     brokerPort: number;
     brokerPath: string;
+    /** Transport scheme. mqtt/mqtts = raw TCP (desktop only); ws/wss = WebSocket (all platforms). */
+    transport: "ws" | "wss" | "mqtt" | "mqtts";
+    /** @deprecated Superseded by `transport`. Kept for migration of older configs. */
     useTLS: boolean;
     autoConnect: boolean;
     debugMode: boolean;
@@ -26,6 +29,7 @@ export const DEFAULT_SETTINGS: LiveDataSettings = {
     brokerHost: "localhost",
     brokerPort: 9001,
     brokerPath: "",
+    transport: "ws",
     useTLS: false,
     autoConnect: false,
     debugMode: false,

@@ -27,10 +27,17 @@ const context = await esbuild.context({
         "@lezer/common",
         "@lezer/highlight",
         "@lezer/lr",
+        // Optional native deps of `ws` — loaded via try/catch in the Node mqtt build.
+        "bufferutil",
+        "utf-8-validate",
     ],
     format: "cjs",
-    target: "es2018",
-    platform: "browser",
+    target: "es2020",
+    // "node" so esbuild keeps Node built-ins (net/tls/...) as runtime requires for the
+    // desktop TCP path (Electron provides them). The WebSocket build is imported via an
+    // explicit subpath and the Node build is only require()'d lazily on desktop, so mobile
+    // never touches Node built-ins. See src/mqtt/load-client.ts.
+    platform: "node",
     logLevel: "info",
     sourcemap: prod ? false : "inline",
     treeShaking: true,

@@ -1,14 +1,7 @@
-import * as mqttLib from "mqtt";
 import type { MqttClient, IClientOptions } from "mqtt";
-
-// mqtt.js v5 uses an ESM default export in the browser bundle.
-// esbuild exposes it as mqttLib.default — resolve connect() safely.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const mqttConnect: typeof mqttLib.connect = (mqttLib as any).default?.connect
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ?? (mqttLib as any).default;
 import { Notice } from "obsidian";
-import { isMobile, type MqttScheme, isSchemeAllowed } from "../util/platform";
+import { isMobile, type MqttScheme, isSchemeAllowed, isTcpScheme, normalizeScheme } from "../util/platform";
+import { getMqttConnect } from "./load-client";
 import type { Logger } from "../util/logger";
 import type { Credentials } from "../storage/credentials";
 
@@ -42,7 +35,9 @@ export class MqttConnection {
     connect(): void {
         if (this.client?.connected) return;
 
-        if (!isSchemeAllowed(this.opts.scheme)) {
+        const scheme = normalizeScheme(this.opts.scheme);
+
+        if (!isSchemeAllowed(scheme)) {
             const msg = "MQTT over TCP is not available on mobile. Use ws:// or wss://.";
             new Notice(msg);
             this.onStatus("error", msg);
@@ -51,8 +46,11 @@ export class MqttConnection {
 
         // Strip any scheme the user might have typed into the host field (e.g. "mqtt://broker.example.com")
         const rawHost = this.opts.host.replace(/^[a-z+]+:\/\//i, "");
-        const pathPart = this.opts.path && this.opts.path.startsWith("/") ? this.opts.path : (this.opts.path ? `/${this.opts.path}` : "");
-        const url = `${this.opts.scheme}://${rawHost}:${this.opts.port}${pathPart}`;
+        // Path only applies to WebSocket transports; TCP ignores it.
+        const pathPart = !isTcpScheme(scheme) && this.opts.path
+            ? (this.opts.path.startsWith("/") ? this.opts.path : `/${this.opts.path}`)
+            : "";
+        const url = `${scheme}://${rawHost}:${this.opts.port}${pathPart}`;
         this.logger.debug("Connecting to", url);
         this.onStatus("connecting");
 
@@ -71,7 +69,8 @@ export class MqttConnection {
         }
 
         try {
-            this.client = mqttConnect(url, options);
+            const connectFn = getMqttConnect(scheme);
+            this.client = connectFn(url, options);
         } catch (e: any) {
             this.logger.error("mqtt.connect threw", e);
             new Notice(`MQTT connect failed: ${e?.message ?? e}`);

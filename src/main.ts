@@ -2,7 +2,7 @@ import { Notice, Plugin, MarkdownPostProcessorContext } from "obsidian";
 import { DEFAULT_SETTINGS, LiveDataSettings } from "./settings";
 import { LiveDataSettingTab } from "./settings-tab";
 import { Logger } from "./util/logger";
-import { isDesktop } from "./util/platform";
+import { isDesktop, normalizeScheme, type MqttScheme } from "./util/platform";
 import { MqttConnection } from "./mqtt/client";
 import { SubscriptionManager } from "./mqtt/subscription-manager";
 import { RestClient } from "./rest/client";
@@ -110,8 +110,13 @@ export default class LiveDataHubPlugin extends Plugin {
     }
 
     async loadSettings(): Promise<void> {
-        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+        const saved = await this.loadData();
+        this.settings = Object.assign({}, DEFAULT_SETTINGS, saved);
         if (!this.settings.offlineCache) this.settings.offlineCache = {};
+        // Migrate older configs that only had `useTLS` and no `transport`.
+        if (saved && saved.transport == null) {
+            this.settings.transport = this.settings.useTLS ? "wss" : "ws";
+        }
     }
 
     async saveSettings(): Promise<void> {
@@ -186,28 +191,16 @@ export default class LiveDataHubPlugin extends Plugin {
         this.mqtt.connect();
     }
 
-    private detectMqttScheme(): "mqtt" | "mqtts" | "ws" | "wss" {
-        // 1. Try to extract scheme from brokerHost if user entered one (e.g., "mqtt://broker.com")
+    private detectMqttScheme(): MqttScheme {
+        // 1. A scheme typed into the host field always wins (e.g. "mqtt://broker.com").
         const schemeMatch = this.settings.brokerHost.match(/^([a-z+]+):\/\//i);
         if (schemeMatch) {
-            const extracted = schemeMatch[1].toLowerCase();
-            // Validate the extracted scheme is valid
-            if (["mqtt", "mqtts", "ws", "wss"].includes(extracted)) {
-                return extracted as "mqtt" | "mqtts" | "ws" | "wss";
-            }
+            return normalizeScheme(schemeMatch[1]);
         }
 
-        // 2. Check if user explicitly set useTLS (if available in settings)
-        const useTls = this.settings.useTLS ?? false;
-
-        // 3. Use intelligent defaults based on platform
-        if (isDesktop()) {
-            // Desktop: prefer TCP (mqtt/mqtts) — more reliable, lower latency
-            return useTls ? "mqtts" : "mqtt";
-        } else {
-            // Mobile: must use WebSocket (ws/wss) — TCP not available in browser
-            return useTls ? "wss" : "ws";
-        }
+        // 2. Otherwise use the explicit transport dropdown.
+        //    Real TCP (mqtt/mqtts) works on desktop; the client gates it on mobile.
+        return normalizeScheme(this.settings.transport);
     }
 
     disconnectMQTT(): void {

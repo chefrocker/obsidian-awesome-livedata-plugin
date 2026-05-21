@@ -17,16 +17,29 @@ export class LiveDataSettingTab extends PluginSettingTab {
             .setName("Host")
             .addText(t => t.setValue(s.brokerHost).onChange(async v => { s.brokerHost = v; await this.plugin.saveSettings(); }));
         new Setting(containerEl)
+            .setName("Transport")
+            .setDesc("WebSocket works on desktop and mobile. Raw TCP (mqtt/mqtts) is desktop only.")
+            .addDropdown(d => d
+                .addOptions({
+                    ws: "WebSocket (ws://)",
+                    wss: "WebSocket Secure (wss://)",
+                    mqtt: "MQTT TCP (mqtt://) — desktop only",
+                    mqtts: "MQTT TCP+TLS (mqtts://) — desktop only",
+                })
+                .setValue(s.transport)
+                .onChange(async v => {
+                    s.transport = v as "ws" | "wss" | "mqtt" | "mqtts";
+                    s.useTLS = v === "wss" || v === "mqtts";
+                    await this.plugin.saveSettings();
+                }));
+        new Setting(containerEl)
             .setName("Port")
-            .setDesc("WebSocket port (e.g. 9001, 1884, 8884).")
+            .setDesc("9001 (WebSocket), 1883 (TCP), 8883 (TCP+TLS).")
             .addText(t => t.setValue(String(s.brokerPort)).onChange(async v => { s.brokerPort = parseInt(v, 10) || 9001; await this.plugin.saveSettings(); }));
         new Setting(containerEl)
             .setName("Path")
-            .setDesc("Optional path for the WebSocket endpoint, e.g. /mqtt.")
+            .setDesc("Only used for WebSocket transports, e.g. /mqtt.")
             .addText(t => t.setValue(s.brokerPath).onChange(async v => { s.brokerPath = v; await this.plugin.saveSettings(); }));
-        new Setting(containerEl)
-            .setName("Use TLS (wss://)")
-            .addToggle(t => t.setValue(s.useTLS).onChange(async v => { s.useTLS = v; await this.plugin.saveSettings(); }));
         new Setting(containerEl)
             .setName("Auto-connect on startup")
             .addToggle(t => t.setValue(s.autoConnect).onChange(async v => { s.autoConnect = v; await this.plugin.saveSettings(); }));
