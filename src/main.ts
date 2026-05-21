@@ -159,12 +159,16 @@ export default class LiveDataHubPlugin extends Plugin {
 
     private openMqttConnection(): void {
         if (this.mqtt) this.mqtt.disconnect();
+
+        // Intelligently determine MQTT scheme/transport
+        const scheme = this.detectMqttScheme();
+
         this.mqtt = new MqttConnection(
             {
                 host: this.settings.brokerHost,
                 port: this.settings.brokerPort,
                 path: this.settings.brokerPath,
-                scheme: this.settings.useTLS ? "wss" : "ws",
+                scheme,
                 credentials: this.credentials,
                 defaultQos: this.settings.defaultQos,
             },
@@ -180,6 +184,30 @@ export default class LiveDataHubPlugin extends Plugin {
             this.mqtt.subscribe(topic);
         }
         this.mqtt.connect();
+    }
+
+    private detectMqttScheme(): "mqtt" | "mqtts" | "ws" | "wss" {
+        // 1. Try to extract scheme from brokerHost if user entered one (e.g., "mqtt://broker.com")
+        const schemeMatch = this.settings.brokerHost.match(/^([a-z+]+):\/\//i);
+        if (schemeMatch) {
+            const extracted = schemeMatch[1].toLowerCase();
+            // Validate the extracted scheme is valid
+            if (["mqtt", "mqtts", "ws", "wss"].includes(extracted)) {
+                return extracted as "mqtt" | "mqtts" | "ws" | "wss";
+            }
+        }
+
+        // 2. Check if user explicitly set useTLS (if available in settings)
+        const useTls = this.settings.useTLS ?? false;
+
+        // 3. Use intelligent defaults based on platform
+        if (isDesktop()) {
+            // Desktop: prefer TCP (mqtt/mqtts) — more reliable, lower latency
+            return useTls ? "mqtts" : "mqtt";
+        } else {
+            // Mobile: must use WebSocket (ws/wss) — TCP not available in browser
+            return useTls ? "wss" : "ws";
+        }
     }
 
     disconnectMQTT(): void {
