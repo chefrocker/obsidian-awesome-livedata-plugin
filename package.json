@@ -1,6 +1,6 @@
 {
   "name": "obsidian-live-data-hub",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "Display live MQTT and REST API data directly in Obsidian notes.",
   "main": "main.js",
   "scripts": {

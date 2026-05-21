@@ -14,6 +14,7 @@ import { ConnectionOptionsModal } from "./connection-modal";
 import { InsertWizardModal } from "./commands/insert-wizard";
 import { migrateCurrentNote, migrateVault, MigrateVaultConfirmModal } from "./commands/migrate";
 import { OVERVIEW_VIEW_TYPE, OverviewView } from "./views/overview-view";
+import { TopicsMonitorModal } from "./views/topics-monitor-modal";
 import { MqttPublisher } from "./mqtt/publisher";
 import { HistoryStore } from "./storage/history";
 
@@ -25,9 +26,9 @@ export default class LiveDataHubPlugin extends Plugin {
     historyStore!: HistoryStore;
     publisher!: MqttPublisher;
     mqtt: MqttConnection | null = null;
+    widgets: Set<LiveDataWidget> = new Set();
     private credentials: Credentials = { username: "", password: "" };
     private inactivityTimer: number | null = null;
-    private widgets: Set<LiveDataWidget> = new Set();
     private saveDebounce: number | null = null;
 
     async onload(): Promise<void> {
@@ -72,6 +73,7 @@ export default class LiveDataHubPlugin extends Plugin {
         this.addCommand({ id: "open-overview", name: "Open overview", callback: () => this.activateOverview() });
         this.addCommand({ id: "connect-mqtt", name: "Connect to MQTT broker", callback: () => this.connectMQTT() });
         this.addCommand({ id: "disconnect-mqtt", name: "Disconnect from MQTT broker", callback: () => this.disconnectMQTT() });
+        this.addCommand({ id: "view-topics", name: "View active MQTT topics", callback: () => new TopicsMonitorModal(this.app, this).open() });
         this.addCommand({ id: "refresh-all-rest", name: "Refresh all REST API blocks", callback: () => this.refreshAllRestBlocks() });
         this.addCommand({ id: "clear-credentials", name: "Clear stored credentials", callback: () => this.clearCredentials() });
 
